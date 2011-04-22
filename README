@@ -1,0 +1,11 @@
+This gadget pulls forecasting data for air quality from the AIRNow API and displays it in a GMail gadget. The gadget provides a form so new zipcodes can be queried and persisted.
+
+Note that this currently immplementation only works in GMail (as opposed to iGoogle or Apps Sites). Fixing this would be a great place for you to start if you wanted to help. :)
+
+airnow-gadget-show.png - a screenshot of the gadget in action
+
+airquality.xml - the primary gadget description
+
+img/ - a folder of images that visualize the AQI score
+
+

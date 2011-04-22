@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+  <ModulePrefs 
+    title="Air Quality Forecast" 
+    description="Visualize air quality forecasts for a specific zipcode."
+    height="150" 
+    scrolling="false" 
+    author="Asthmapolis" 
+    author_email="help@asthmapolis.com">
+    <Require feature="dynamic-height"/>
+    <Require feature="setprefs"/>
+
+    <UserPref name="zipcode" display_name="zipcode" required="true" datatype="hidden" default_value="53711"/>
+
+  </ModulePrefs>
+
+  <Content type="html">
+  
+  <![CDATA[
+    	
+      <div id="location"> </div>
+
+      <div id="forecast">
+        <div id="score">fetching forecast...</div>
+        <div id="icon"> </div>
+      </div>
+
+      <form style="clear:both;padding:4px 0px;margin-bottom:1px;"  name="zipform" action="" method="get">
+        <input style="font-size:10px;" type="button" name="button" value="Change Zipcode" onClick="changeZip(this.form)">
+        <input style="font-size:10px;" type="text" name="zipcode" size="5" maxlength="5" value="">
+      </form>
+      
+      <div class="external-link"><a href="http://www.airnow.gov/index.cfm?action=aqibasics.aqi" target="_blank">understanding the AQI number</a></div>
+
+    <style type="text/css">
+      #forecast {line-height: 130%;}
+      #score {clear: both;float: left;font-size: .8em;}
+      #icon {float: right;text-align: right;padding-right: 12px;}
+      #location {font-size: .9em;padding: 4px 2px 4px;}
+      #zipform {clear:both;padding-top:8px;padding-bottom:2px;margin-bottom: 1px;}
+      .external-link {padding-top: 2px;font-size: .65em;}
+    </style>
+
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+    <script type="text/javascript">
+      var asthmapolis_prefs = new gadgets.Prefs();
+      var asthmapolis_zipcode = asthmapolis_prefs.getString("zipcode");
+      if( asthmapolis_zipcode == "" ) asthmapolis_zipcode = "53711";
+      var asthmapolis_icons = ['src="http://www.asthmapolis.com/gadgets/img/unknown.png" alt="Unavailable"',
+                               'src="http://www.asthmapolis.com/gadgets/img/good.png" alt="Good"',
+                               'src="http://www.asthmapolis.com/gadgets/img/moderate.png" alt="Moderate"',
+                               'src="http://www.asthmapolis.com/gadgets/img/unhealthyforsome.png" alt="Unhealthy for Sensitive Groups"',
+                               'src="http://www.asthmapolis.com/gadgets/img/unhealthy.png" alt="Unhealthy"',
+                               'src="http://www.asthmapolis.com/gadgets/img/veryunhealthy.png" alt="Very Unhealthy"',
+                               'src="http://www.asthmapolis.com/gadgets/img/hazardous.png" alt="Hazardous"',
+                            ];
+
+      $(document).ready(function() {
+          setForecast();
+      });
+
+      function changeZip(form) {
+          asthmapolis_zipcode = zipform.zipcode.value;
+          asthmapolis_prefs.set("zipcode",asthmapolis_zipcode);
+          $('#location').replaceWith('<div id="location">looking up '+asthmapolis_zipcode+'</div>');
+          $("#forecast").replaceWith('<div id="forecast">fetching forecast...</div>');
+          setForecast();
+      }
+
+      function setForecast() {
+          var ts = new Date().getTime();
+          params = {};
+          params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+    	  gadgets.io.makeRequest("http://ws1.airnowgateway.org/GatewayWebServiceREST/Gateway.svc/forecastbyzipcode?zipcode="+asthmapolis_zipcode+"&format=json&key=54BFF651-D561-4066-95B9-3C8AC5982BC0&nocache="+ts,
+                                 airnowResponse,
+                                 params
+                                );
+      } // setForecast
+      
+      function airnowResponse(obj) {
+          var jsondata = obj.data;
+          $("#forecast").replaceWith('<div id="forecast"> </div>');
+
+          var forecasts = jsondata.forecast;
+          $("#location").replaceWith('<div id="location">'+forecasts[0].ReportingArea+', '+forecasts[0].StateCode+' </div>');
+          for( var i=0; i < forecasts.length; i++ ) {
+              // ignore ozone forecasts
+              if( forecasts[i].ParameterName == "OZONE" ) continue;
+
+              var date = forecasts[i].DateForecast.split(" ")[0];
+              var category = forecasts[i].CategoryNumber;
+              var aqi = forecasts[i].AQI;
+
+              var score = '<div id=score>'+date+'</div>';
+              var icon = '<div id=icon><img '+asthmapolis_icons[category]+' title="'+aqi+'"/></div>';
+
+      	      $("#forecast").append(score+icon);
+
+              if( i > 3 ) break;
+          }
+          gadgets.window.adjustHeight();
+       } // success function
+
+    </script>
+    ]]>
+    
+  </Content>
+
+</Module>
