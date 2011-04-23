@@ -34,10 +34,11 @@
 
     <style type="text/css">
       #forecast {line-height: 130%;}
-      #score {clear: both;float: left;font-size: .8em;}
-      #icon {float: right;text-align: right;padding-right: 12px;}
+      #score {clear: both;float: left;font-size: .8em;padding-left:4px;}
+      #icon {float: right;text-align: right;padding-right: 8px;}
       #location {font-size: .9em;padding: 4px 2px 4px;}
       #zipform {clear:both;padding-top:8px;padding-bottom:2px;margin-bottom: 1px;}
+      .details {font-size:.65em;text-align:right;float:right;padding-right:5px;}
       .external-link {padding-top: 2px;font-size: .65em;}
     </style>
 
@@ -62,6 +63,7 @@
       function changeZip(form) {
           asthmapolis_zipcode = zipform.zipcode.value;
           asthmapolis_prefs.set("zipcode",asthmapolis_zipcode);
+
           $('#location').replaceWith('<div id="location">looking up '+asthmapolis_zipcode+'</div>');
           $("#forecast").replaceWith('<div id="forecast">fetching forecast...</div>');
           setForecast();
@@ -78,25 +80,30 @@
       } // setForecast
       
       function airnowResponse(obj) {
+          var entries = 0;
+          var details = 'http://www.airnow.gov/index.cfm?action=airnow.local_city&zipcode='+asthmapolis_zipcode;
+
           var jsondata = obj.data;
           $("#forecast").replaceWith('<div id="forecast"> </div>');
 
           var forecasts = jsondata.forecast;
-          $("#location").replaceWith('<div id="location">'+forecasts[0].ReportingArea+', '+forecasts[0].StateCode+' </div>');
+          $("#location").replaceWith('<div id="location">'+forecasts[0].ReportingArea+', '+forecasts[0].StateCode+'<span class="details"><a href="'+details+'" target="_blank">details</a></span></div>');
           for( var i=0; i < forecasts.length; i++ ) {
               // ignore ozone forecasts
-              if( forecasts[i].ParameterName == "OZONE" ) continue;
+              if( forecasts[i].ParameterName != "PM2.5" ) continue;
 
               var date = forecasts[i].DateForecast.split(" ")[0];
               var category = forecasts[i].CategoryNumber;
               var aqi = forecasts[i].AQI;
+              var discussion = forecasts[i].Discsussion;
 
               var score = '<div id=score>'+date+'</div>';
-              var icon = '<div id=icon><img '+asthmapolis_icons[category]+' title="'+aqi+'"/></div>';
+              var icon = '<div id=icon><img '+asthmapolis_icons[category]+' title="AQI is '+aqi+'"/></div>';
 
       	      $("#forecast").append(score+icon);
+              entries++;
 
-              if( i > 3 ) break;
+              if( entries == 4 ) break;
           }
           gadgets.window.adjustHeight();
        } // success function
